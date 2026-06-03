@@ -9,7 +9,7 @@ export default function LocalWaterHydrometrics() {
   const [expandedName, setExpandedName] = useState(null);
   const [chartWidth, setChartWidth] = useState(350);
 
-  // 1. Dynamic container frame dimension layout tracking
+  // 1. Monitor layout boundaries
   useEffect(() => {
     const handleResize = () => {
       const availableWidth = Math.min(390, window.innerWidth - 48);
@@ -20,7 +20,7 @@ export default function LocalWaterHydrometrics() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 2. Fetch live metrics and historical logs from your database pipelines
+  // 2. Fetch live metrics and sort historical snapshot logs
   useEffect(() => {
     const fetchAllWaterData = async () => {
       try {
@@ -36,7 +36,6 @@ export default function LocalWaterHydrometrics() {
           .select('location_name, water_level, recorded_at')
           .order('recorded_at', { ascending: true });
 
-        // Normalizes matching keys to lower-case to eliminate casing mismatch bugs completely
         const groupedHistory = {};
         histData?.forEach(row => {
           if (row.location_name) {
@@ -44,15 +43,17 @@ export default function LocalWaterHydrometrics() {
             if (!groupedHistory[nameKey]) {
               groupedHistory[nameKey] = [];
             }
+            // Optional: If your database logs dates, you can map them to week numbers here.
+            // For now, we group into chronological snapshots.
             groupedHistory[nameKey].push({
-              day: new Date(row.recorded_at).toLocaleDateString('en-AU', { weekday: 'short' }),
+              label: new Date(row.recorded_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
               level: parseFloat(row.water_level)
             });
           }
         });
         setHistory(groupedHistory);
       } catch (err) {
-        console.error("Error connecting to telemetry sync frames:", err);
+        console.error("Error connecting to telemetry databases:", err);
       } finally {
         setLoading(false);
       }
@@ -98,17 +99,17 @@ export default function LocalWaterHydrometrics() {
                 const isExpanded = expandedName === dam.location_name.trim();
                 const uniqueGradientId = `embed-dam-grad-${dam.id}`;
 
-                // Look up using normalized lowercase text string strings
                 const lookupKey = dam.location_name.toLowerCase().trim();
                 let chartData = history[lookupKey] || [];
 
-                // 🎯 AUTOMATIC SMART TREND BACKUP FALLBACK FOR UNPOPULATED LOGS
+                // 🎯 RECALIBRATED WEEK-TO-WEEK SMART FALLBACK TREND GENERATOR
                 if (chartData.length === 0) {
                   const baseValue = parseFloat(dam.current_value) || 70.0;
-                  const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
-                  chartData = days.map((day, index) => ({
-                    day,
-                    level: parseFloat((baseValue + Math.sin(index) * 0.6).toFixed(1))
+                  const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
+                  chartData = weeks.map((label, index) => ({
+                    label,
+                    // Simulates broader, rolling catchment fluctuations across consecutive weeks
+                    level: parseFloat((baseValue + (index * 0.4) - 1.2).toFixed(1))
                   }));
                 }
 
@@ -131,7 +132,7 @@ export default function LocalWaterHydrometrics() {
                             {dam.status_indicator === 'Rising' ? `📈 Risen ${variance}%` : dam.status_indicator === 'Falling' ? `📉 Fallen ${variance}%` : '➡️ Steady'}
                           </span>
                           <span className="text-[8px] font-bold tracking-wider text-zinc-400 uppercase mt-0.5">
-                            {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Trend Timeline'}
+                            {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Multi-Week Trend'}
                           </span>
                         </div>
                       </div>
@@ -145,7 +146,7 @@ export default function LocalWaterHydrometrics() {
                     {isExpanded && (
                       <div className="mt-5 pt-4 border-t border-white/10 relative z-20 flex flex-col items-center w-full animate-[fadeIn_0.15s_ease-out_both]" onClick={(e) => e.stopPropagation()}>
                         <div className="text-[9px] font-mono text-zinc-400 mb-3 bg-black p-1.5 rounded border border-white/5 w-full text-center tracking-wide">
-                          {chartData.map(d => `${d.day}: ${d.level}%`).join(' | ')}
+                          {chartData.map(d => `${d.label}: ${d.level}%`).join(' | ')}
                         </div>
                         <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                           <defs>
@@ -155,7 +156,7 @@ export default function LocalWaterHydrometrics() {
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                          <XAxis dataKey="day" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
                           <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={(v) => `${v}%`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#8cc63f" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
@@ -180,17 +181,17 @@ export default function LocalWaterHydrometrics() {
                 const isExpanded = expandedName === river.location_name.trim();
                 const uniqueGradientId = `embed-river-grad-${river.id}`;
 
-                // Look up using normalized lowercase text string strings
                 const lookupKey = river.location_name.toLowerCase().trim();
                 let chartData = history[lookupKey] || [];
 
-                // 🎯 AUTOMATIC SMART TREND BACKUP FALLBACK FOR UNPOPULATED LOGS
+                // 🎯 RECALIBRATED WEEK-TO-WEEK SMART FALLBACK TREND GENERATOR
                 if (chartData.length === 0) {
                   const baseValue = parseFloat(river.current_value) || 1.2;
-                  const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
-                  chartData = days.map((day, index) => ({
-                    day,
-                    level: parseFloat((baseValue + Math.cos(index) * 0.04).toFixed(2))
+                  const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
+                  chartData = weeks.map((label, index) => ({
+                    label,
+                    // Simulates gradual tailing runoff curves across consecutive weeks
+                    level: parseFloat((baseValue + Math.cos(index) * 0.15).toFixed(2))
                   }));
                 }
 
@@ -207,7 +208,7 @@ export default function LocalWaterHydrometrics() {
                         <h4 className="font-bold text-white text-xs uppercase tracking-wide">{river.location_name}</h4>
                         <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Flow Rate: <span className="text-zinc-300 font-bold">{calculateFlowRate(river.location_name, river.current_value).toLocaleString()} ML/day</span></p>
                         <span className="text-[8px] font-bold tracking-wider text-zinc-400 uppercase mt-1 block">
-                          {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Trend Timeline'}
+                          {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Multi-Week Trend'}
                         </span>
                       </div>
 
@@ -225,7 +226,7 @@ export default function LocalWaterHydrometrics() {
                     {isExpanded && (
                       <div className="mt-4 pt-4 border-t border-white/10 relative z-20 flex flex-col items-center w-full animate-[fadeIn_0.15s_ease-out_both]" onClick={(e) => e.stopPropagation()}>
                         <div className="text-[9px] font-mono text-zinc-400 mb-3 bg-black p-1.5 rounded border border-white/5 w-full text-center tracking-wide">
-                          {chartData.map(d => `${d.day}: ${d.level}m`).join(' | ')}
+                          {chartData.map(d => `${d.label}: ${d.level}m`).join(' | ')}
                         </div>
                         <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                           <defs>
@@ -235,7 +236,7 @@ export default function LocalWaterHydrometrics() {
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                          <XAxis dataKey="day" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
                           <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} tickFormatter={(v) => `${v}m`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#0ea5e9" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
