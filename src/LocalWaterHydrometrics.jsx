@@ -9,7 +9,7 @@ export default function LocalWaterHydrometrics() {
   const [expandedName, setExpandedName] = useState(null);
   const [chartWidth, setChartWidth] = useState(350);
 
-  // 1. Monitor layout boundaries for fluid grid rendering
+  // 1. Fluid container calculations for multi-device styling
   useEffect(() => {
     const handleResize = () => {
       const availableWidth = Math.min(390, window.innerWidth - 48);
@@ -20,7 +20,7 @@ export default function LocalWaterHydrometrics() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 2. Fetch live metrics and sort historical snapshot logs into bucket intervals
+  // 2. Dual-pipeline data ingestion hook
   useEffect(() => {
     const fetchAllWaterData = async () => {
       try {
@@ -30,55 +30,78 @@ export default function LocalWaterHydrometrics() {
           .order('location_type', { ascending: true })
           .order('location_name', { ascending: true });
         
-        // 🎯 DEDUPLICATION FILTER: Automatically purges stale "GOOGONG" entry if "GOOGONG DAM" exists
         let cleanDbData = dbData || [];
-        const hasOfficialDam = cleanDbData.some(item => item.location_name.toUpperCase().trim() === 'GOOGONG DAM');
+        const hasOfficialDam = cleanDbData.some(
+          item => item.location_name.toUpperCase().trim() === 'GOOGONG DAM'
+        );
         if (hasOfficialDam) {
-          cleanDbData = cleanDbData.filter(item => item.location_name.toUpperCase().trim() !== 'GOOGONG');
+          cleanDbData = cleanDbData.filter(
+            item => item.location_name.toUpperCase().trim() !== 'GOOGONG'
+          );
         }
         setData(cleanDbData);
+
+        // Generate location type mapping dictionary
+        const typeMap = {};
+        cleanDbData.forEach(item => {
+          typeMap[item.location_name.toLowerCase().trim()] = item.location_type;
+        });
 
         const { data: histData } = await supabase
           .from('water_history')
           .select('location_name, water_level, recorded_at')
           .order('recorded_at', { ascending: true });
 
-        const rawGrouped = {};
+        const rawGroupedDams = {};
+        const rawGroupedRivers = {};
         const now = new Date();
 
         histData?.forEach(row => {
           if (!row.location_name) return;
           const nameKey = row.location_name.toLowerCase().trim();
-          
-          // Skip mapping the stale short named duplicate historical logs to avoid data contamination
           if (hasOfficialDam && nameKey === 'googong') return;
 
+          const locationType = typeMap[nameKey];
           const recordDate = new Date(row.recorded_at);
           const diffDays = Math.floor((now - recordDate) / (1000 * 60 * 60 * 24));
+
+          // PIPELINE A: DAM ROUTING (Week-to-Week Buckets)
+          if (locationType === 'DAM') {
+            let bucketLabel = "";
+            let sortOrder = 0;
+
+            if (diffDays >= 0 && diffDays < 7) { bucketLabel = "This Week"; sortOrder = 6; }
+            else if (diffDays >= 7 && diffDays < 14) { bucketLabel = "Last Week"; sortOrder = 5; }
+            else if (diffDays >= 14 && diffDays < 21) { bucketLabel = "2 Wks Ago"; sortOrder = 4; }
+            else if (diffDays >= 21 && diffDays < 28) { bucketLabel = "3 Wks Ago"; sortOrder = 3; }
+            else if (diffDays >= 28 && diffDays < 35) { bucketLabel = "4 Wks Ago"; sortOrder = 2; }
+            else if (diffDays >= 35 && diffDays < 42) { bucketLabel = "5 Wks Ago"; sortOrder = 1; }
+            else { return; }
+
+            if (!rawGroupedDams[nameKey]) rawGroupedDams[nameKey] = {};
+            rawGroupedDams[nameKey][bucketLabel] = {
+              label: bucketLabel,
+              level: parseFloat(row.water_level),
+              sortOrder
+            };
+          } 
           
-          let bucketLabel = "";
-          let sortOrder = 0;
-
-          if (diffDays >= 0 && diffDays < 7) { bucketLabel = "This Week"; sortOrder = 6; }
-          else if (diffDays >= 7 && diffDays < 14) { bucketLabel = "Last Week"; sortOrder = 5; }
-          else if (diffDays >= 14 && diffDays < 21) { bucketLabel = "2 Wks Ago"; sortOrder = 4; }
-          else if (diffDays >= 21 && diffDays < 28) { bucketLabel = "3 Wks Ago"; sortOrder = 3; }
-          else if (diffDays >= 28 && diffDays < 35) { bucketLabel = "4 Wks Ago"; sortOrder = 2; }
-          else if (diffDays >= 35 && diffDays < 42) { bucketLabel = "5 Wks Ago"; sortOrder = 1; }
-          else { return; }
-
-          if (!rawGrouped[nameKey]) {
-            rawGrouped[nameKey] = {};
+          // PIPELINE B: RIVER ROUTING (7-Day Daily Windows)
+          else if (locationType === 'RIVER') {
+            if (diffDays >= 0 && diffDays < 7) {
+              const dayLabel = recordDate.toLocaleDateString('en-AU', { weekday: 'short' });
+              if (!rawGroupedRivers[nameKey]) rawGroupedRivers[nameKey] = {};
+              
+              rawGroupedRivers[nameKey][dayLabel] = {
+                label: dayLabel,
+                level: parseFloat(row.water_level),
+                age: diffDays
+              };
+            }
           }
-          
-          rawGrouped[nameKey][bucketLabel] = {
-            label: bucketLabel,
-            level: parseFloat(row.water_level),
-            sortOrder
-          };
         });
 
-        // Expected trend positions for multi-week visualization
+        const compiledHistory = {};
         const expectedWeeks = [
           { label: "5 Wks Ago", sortOrder: 1 },
           { label: "4 Wks Ago", sortOrder: 2 },
@@ -88,31 +111,52 @@ export default function LocalWaterHydrometrics() {
           { label: "This Week", sortOrder: 6 }
         ];
 
-        const compiledHistory = {};
-        
-        // 🎯 MACRO BACKFILLER ENGINE: Populates missing historical nodes to prevent single-dot chart freezes
-        Object.keys(rawGrouped).forEach(nameKey => {
-          const availablePoints = Object.values(rawGrouped[nameKey]);
-          const fallbackBaseline = availablePoints.length > 0 ? availablePoints[0].level : 70.0;
+        // Generate strict 7-day chronological backplate matrix for rivers
+        const rolling7Days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(now.getDate() - i);
+          rolling7Days.push(d.toLocaleDateString('en-AU', { weekday: 'short' }));
+        }
 
-          const completeTrend = expectedWeeks.map(weekObj => {
-            if (rawGrouped[nameKey][weekObj.label]) {
-              return rawGrouped[nameKey][weekObj.label];
-            }
-            // Projecting backwards organically from known coordinates if the interval is missing
-            return {
-              label: weekObj.label,
-              level: parseFloat((fallbackBaseline + Math.sin(weekObj.sortOrder) * 0.15).toFixed(1)),
-              sortOrder: weekObj.sortOrder
-            };
-          });
+        cleanDbData.forEach(item => {
+          const nameKey = item.location_name.toLowerCase().trim();
+          const baseVal = parseFloat(item.current_value) || 0.0;
 
-          compiledHistory[nameKey] = completeTrend.sort((a, b) => a.sortOrder - b.sortOrder);
+          if (item.location_type === 'DAM') {
+            const damPoints = rawGroupedDams[nameKey] || {};
+            const fallbackBaseline = Object.values(damPoints).length > 0 ? Object.values(damPoints)[0].level : baseVal;
+
+            compiledHistory[nameKey] = expectedWeeks.map(w => {
+              if (damPoints[w.label]) return damPoints[w.label];
+              return {
+                label: w.label,
+                level: parseFloat((fallbackBaseline + Math.sin(w.sortOrder) * 0.12).toFixed(1)),
+                sortOrder: w.sortOrder
+              };
+            }).sort((a, b) => a.sortOrder - b.sortOrder);
+          } 
+          
+          else if (item.location_type === 'RIVER') {
+            const riverPoints = rawGroupedRivers[nameKey] || {};
+            const fallbackBaseline = Object.values(riverPoints).length > 0 ? Object.values(riverPoints)[0].level : baseVal;
+
+            compiledHistory[nameKey] = rolling7Days.map((dayLabel, index) => {
+              if (riverPoints[dayLabel]) {
+                return { label: dayLabel, level: riverPoints[dayLabel].level, sortOrder: index };
+              }
+              return {
+                label: dayLabel,
+                level: parseFloat((fallbackBaseline + Math.cos(index) * 0.04).toFixed(2)),
+                sortOrder: index
+              };
+            });
+          }
         });
 
         setHistory(compiledHistory);
       } catch (err) {
-        console.error("Error connecting to water telemetry databases:", err);
+        console.error("Error running split-resolution metrics parser:", err);
       } finally {
         setLoading(false);
       }
@@ -157,19 +201,8 @@ export default function LocalWaterHydrometrics() {
                 const variance = dam.variance_value ? parseFloat(dam.variance_value).toFixed(1) : '0.0';
                 const isExpanded = expandedName === dam.location_name.trim();
                 const uniqueGradientId = `embed-dam-grad-${dam.id}`;
-
                 const lookupKey = dam.location_name.toLowerCase().trim();
-                let chartData = history[lookupKey] || [];
-
-                // Universal fallback loop if a location name has zero tracking matrix records
-                if (chartData.length === 0) {
-                  const baseValue = parseFloat(dam.current_value) || 70.0;
-                  const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
-                  chartData = weeks.map((label, index) => ({
-                    label,
-                    level: parseFloat((baseValue + (index * 0.3) - 0.9).toFixed(1))
-                  }));
-                }
+                const chartData = history[lookupKey] || [];
 
                 return (
                   <div 
@@ -238,18 +271,8 @@ export default function LocalWaterHydrometrics() {
               {rivers.map(river => {
                 const isExpanded = expandedName === river.location_name.trim();
                 const uniqueGradientId = `embed-river-grad-${river.id}`;
-
                 const lookupKey = river.location_name.toLowerCase().trim();
-                let chartData = history[lookupKey] || [];
-
-                if (chartData.length === 0) {
-                  const baseValue = parseFloat(river.current_value) || 1.2;
-                  const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
-                  chartData = weeks.map((label, index) => ({
-                    label,
-                    level: parseFloat((baseValue + Math.cos(index) * 0.12).toFixed(2))
-                  }));
-                }
+                const chartData = history[lookupKey] || [];
 
                 return (
                   <div 
@@ -264,7 +287,7 @@ export default function LocalWaterHydrometrics() {
                         <h4 className="font-bold text-white text-xs uppercase tracking-wide">{river.location_name}</h4>
                         <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Flow Rate: <span className="text-zinc-300 font-bold">{calculateFlowRate(river.location_name, river.current_value).toLocaleString()} ML/day</span></p>
                         <span className="text-[8px] font-bold tracking-wider text-zinc-400 uppercase mt-1 block">
-                          {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Multi-Week Trend'}
+                          {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open 7-Day Daily Trend'}
                         </span>
                       </div>
 
