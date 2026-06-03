@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import LocalWaterHydrometrics from './LocalWaterHydrometrics';
 
 const getWindDirection = (deg) => {
   if (deg === undefined) return '';
@@ -417,54 +418,9 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
           </div>
 
           {/* EMBEDDED WATER TELEMETRY CONTAINER */}
-          <div className="bg-black/40 backdrop-blur-md rounded-xl p-5 shadow-lg border border-white/10 space-y-6">
-            <div className="flex justify-between items-center border-b border-white/5 pb-3">
-              <h2 className="font-black text-lg text-white flex items-center gap-2"><span>📊</span> LOCAL WATER HYDROMETRICS</h2>
-            </div>
+          <LocalWaterHydrometrics />
 
-            {isLoading ? <div className="text-center py-10 text-zinc-500 text-xs italic">Polling gauge logs...</div> : (
-              <>
-                <div className="space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Water Storage Catchments</h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {dams.map(dam => {
-                      const variance = dam.variance_value ? parseFloat(dam.variance_value).toFixed(1) : '0.0';
-                      return (
-                        <div key={dam.id} className="bg-zinc-900/60 border border-white/5 p-4 rounded-xl flex justify-between items-center relative overflow-hidden">
-                          <div className="space-y-1 z-10">
-                            <h4 className="font-black text-white text-sm uppercase tracking-wide">{dam.location_name}</h4>
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded inline-block ${
-                              dam.status_indicator === 'Rising' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/30' :
-                              dam.status_indicator === 'Falling' ? 'bg-amber-950 text-amber-400 border border-amber-800/30' : 'bg-zinc-800 text-zinc-400'
-                            }`}>
-                              {dam.status_indicator === 'Rising' ? `📈 Risen ${variance}%` : dam.status_indicator === 'Falling' ? `📉 Fallen ${variance}%` : '➡️ Steady'}
-                            </span>
-                          </div>
-                          <div className="text-right z-10"><div className="text-2xl font-black text-[#8cc63f]">{Number(dam.current_value).toFixed(1)}%</div></div>
-                          <div className="absolute bottom-0 left-0 bg-[#8cc63f]/5 h-full transition-all duration-500" style={{ width: `${dam.current_value}%` }} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Regional Stream Gauges</h3>
-                  <div className="space-y-2.5">
-                    {processedRivers.map(river => (
-                      <div key={river.id} className="bg-zinc-900/40 border border-white/5 p-3.5 rounded-xl flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-white text-xs uppercase tracking-wide">{river.location_name}</h4>
-                          <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Estimated Flow: <span className="text-zinc-300 font-bold">{calculateFlowRate(river.location_name, river.current_value).toLocaleString()} ML/day</span></p>
-                        </div>
-                        <div className="text-right"><div className="text-base font-black text-white">{Number(river.current_value).toFixed(2)}m</div></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+ 
 
         </div>
       </div>
