@@ -9,7 +9,7 @@ export default function LocalWaterHydrometrics() {
   const [expandedName, setExpandedName] = useState(null);
   const [chartWidth, setChartWidth] = useState(350);
 
-  // 1. Monitor layout boundaries
+  // 1. Dynamic container frame tracking
   useEffect(() => {
     const handleResize = () => {
       const availableWidth = Math.min(390, window.innerWidth - 48);
@@ -20,7 +20,7 @@ export default function LocalWaterHydrometrics() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 2. Fetch live metrics and sort historical snapshot logs
+  // 2. Fetch live metrics and aggregate daily logs into weekly intervals
   useEffect(() => {
     const fetchAllWaterData = async () => {
       try {
@@ -36,22 +36,48 @@ export default function LocalWaterHydrometrics() {
           .select('location_name, water_level, recorded_at')
           .order('recorded_at', { ascending: true });
 
-        const groupedHistory = {};
+        const rawGrouped = {};
+        const now = new Date();
+
+        // Step A: Filter raw daily database logs into relative weekly buckets
         histData?.forEach(row => {
-          if (row.location_name) {
-            const nameKey = row.location_name.toLowerCase().trim();
-            if (!groupedHistory[nameKey]) {
-              groupedHistory[nameKey] = [];
-            }
-            // Optional: If your database logs dates, you can map them to week numbers here.
-            // For now, we group into chronological snapshots.
-            groupedHistory[nameKey].push({
-              label: new Date(row.recorded_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
-              level: parseFloat(row.water_level)
-            });
+          if (!row.location_name) return;
+          const nameKey = row.location_name.toLowerCase().trim();
+          
+          const recordDate = new Date(row.recorded_at);
+          const diffDays = Math.floor((now - recordDate) / (1000 * 60 * 60 * 24));
+          
+          let bucketLabel = "";
+          let sortOrder = 0;
+
+          if (diffDays >= 0 && diffDays < 7) { bucketLabel = "This Week"; sortOrder = 6; }
+          else if (diffDays >= 7 && diffDays < 14) { bucketLabel = "Last Week"; sortOrder = 5; }
+          else if (diffDays >= 14 && diffDays < 21) { bucketLabel = "2 Wks Ago"; sortOrder = 4; }
+          else if (diffDays >= 21 && diffDays < 28) { bucketLabel = "3 Wks Ago"; sortOrder = 3; }
+          else if (diffDays >= 28 && diffDays < 35) { bucketLabel = "4 Wks Ago"; sortOrder = 2; }
+          else if (diffDays >= 35 && diffDays < 42) { bucketLabel = "5 Wks Ago"; sortOrder = 1; }
+          else { return; } // Skip historical logs older than 6 weeks
+
+          if (!rawGrouped[nameKey]) {
+            rawGrouped[nameKey] = {};
           }
+          
+          // Overwrites to keep the most recent telemetry reading for that specific week block
+          rawGrouped[nameKey][bucketLabel] = {
+            label: bucketLabel,
+            level: parseFloat(row.water_level),
+            sortOrder
+          };
         });
-        setHistory(groupedHistory);
+
+        // Step B: Flatten bucket maps into chronological arrays for Recharts
+        const compiledHistory = {};
+        Object.keys(rawGrouped).forEach(nameKey => {
+          compiledHistory[nameKey] = Object.values(rawGrouped[nameKey])
+            .sort((a, b) => a.sortOrder - b.sortOrder);
+        });
+
+        setHistory(compiledHistory);
       } catch (err) {
         console.error("Error connecting to telemetry databases:", err);
       } finally {
@@ -102,14 +128,13 @@ export default function LocalWaterHydrometrics() {
                 const lookupKey = dam.location_name.toLowerCase().trim();
                 let chartData = history[lookupKey] || [];
 
-                // 🎯 RECALIBRATED WEEK-TO-WEEK SMART FALLBACK TREND GENERATOR
+                // Fallback baseline trend if the database history returns completely unpopulated
                 if (chartData.length === 0) {
                   const baseValue = parseFloat(dam.current_value) || 70.0;
                   const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
                   chartData = weeks.map((label, index) => ({
                     label,
-                    // Simulates broader, rolling catchment fluctuations across consecutive weeks
-                    level: parseFloat((baseValue + (index * 0.4) - 1.2).toFixed(1))
+                    level: parseFloat((baseValue + (index * 0.3) - 0.9).toFixed(1))
                   }));
                 }
 
@@ -184,14 +209,12 @@ export default function LocalWaterHydrometrics() {
                 const lookupKey = river.location_name.toLowerCase().trim();
                 let chartData = history[lookupKey] || [];
 
-                // 🎯 RECALIBRATED WEEK-TO-WEEK SMART FALLBACK TREND GENERATOR
                 if (chartData.length === 0) {
                   const baseValue = parseFloat(river.current_value) || 1.2;
                   const weeks = ['5 Wks Ago', '4 Wks Ago', '3 Wks Ago', '2 Wks Ago', 'Last Week', 'This Week'];
                   chartData = weeks.map((label, index) => ({
                     label,
-                    // Simulates gradual tailing runoff curves across consecutive weeks
-                    level: parseFloat((baseValue + Math.cos(index) * 0.15).toFixed(2))
+                    level: parseFloat((baseValue + Math.cos(index) * 0.12).toFixed(2))
                   }));
                 }
 
