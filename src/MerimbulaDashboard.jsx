@@ -43,6 +43,7 @@ export default function MerimbulaDashboard({ onBack, onNavigate }) {
   const [picksLoading, setPicksLoading] = useState(true);
   // Add state for the YouTube video asset:
   const [videoData, setVideoData] = useState(null);
+  const [latestNews, setLatestNews] = useState(null);
 
   const [currentTimePercent, setCurrentTimePercent] = useState(48);
   const [currentEstHeight, setCurrentEstHeight] = useState("1.3m");
@@ -79,10 +80,11 @@ export default function MerimbulaDashboard({ onBack, onNavigate }) {
 
       // 🏪 Fetch active coastal inventory parameters from Supabase
         try {
-          const [picksRes, weeklyRes, videoRes] = await Promise.all([
+          const [picksRes, weeklyRes, videoRes, newsRes] = await Promise.all([
             supabase.from('staff_picks').select('*').eq('store_location', 'Merimbula'),
             supabase.from('product_of_the_week').select('*').eq('store_location', 'Merimbula').maybeSingle(),
-            supabase.from('store_videos').select('*').eq('store_location', 'Merimbula').maybeSingle()
+            supabase.from('store_videos').select('*').eq('store_location', 'Merimbula').maybeSingle(),
+            supabase.from('store_news').select('*').eq('store_location', 'Merimbula').maybeSingle()
           ]);
           
 
@@ -90,6 +92,7 @@ export default function MerimbulaDashboard({ onBack, onNavigate }) {
           setStaffPicks(picksRes.data || []);
           setWeeklyProduct(weeklyRes.data || null);
           setVideoData(videoRes.data || null);
+          if (newsRes.data) setLatestNews(newsRes.data);
         } catch (dataErr) {
           console.error("Error retrieving coastal selections stream:", dataErr);
         } finally {
@@ -186,6 +189,44 @@ export default function MerimbulaDashboard({ onBack, onNavigate }) {
         </div>
 
         <div className="px-4 mt-5 max-w-md mx-auto space-y-5">
+          {/* 📢 LATEST NEWS FEATURE BANNER */}
+          {latestNews && (
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden shadow-xl flex flex-col group">
+              <div className="h-40 w-full relative bg-zinc-950 overflow-hidden shrink-0">
+                <img 
+                  src={latestNews.image_url} 
+                  alt={latestNews.headline} 
+                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 ease-out cursor-pointer"
+                  onClick={() => onNavigate('blog-article', { location: 'Merimbula' })}
+                />
+                <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-[8px] px-2 py-0.5 rounded-full text-[#00aeef] font-black uppercase tracking-wider border border-white/5">
+                  Latest News
+                </span>
+              </div>
+              <div className="p-4 space-y-3 flex-grow flex flex-col justify-between">
+                <div className="space-y-1 cursor-pointer" onClick={() => onNavigate('blog-article', { location: 'Merimbula' })}>
+                  <h3 className="font-black text-base text-white uppercase tracking-wide leading-tight group-hover:text-[#00aeef] transition-colors">
+                    {latestNews.headline}
+                  </h3>
+                  <p className="text-zinc-400 text-xs leading-relaxed line-clamp-2 font-normal">
+                    {latestNews.blurb}
+                  </p>
+                </div>
+                {latestNews.button_text && latestNews.button_url && (
+                  <div className="pt-1 border-t border-white/5">
+                    <a 
+                      href={latestNews.button_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full bg-[#00aeef] hover:bg-[#25beff] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-all block text-center shadow-md"
+                    >
+                      {latestNews.button_text} &rarr;
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* BAROMETRIC TRACKER */}
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-2">

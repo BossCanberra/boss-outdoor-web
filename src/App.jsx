@@ -7,6 +7,7 @@ import MerimbulaDashboard from './MerimbulaDashboard';
 import AdminDashboard from './AdminDashboard';
 import WaterTelemetry from './WaterTelemetry'; 
 import SolunarPlanner from './SolunarPlanner';
+import NewsArticle from './NewsArticle';
 
 export default function App() {
   const [view, setView] = useState('home');
@@ -39,6 +40,7 @@ export default function App() {
       {/* Dynamic Navigation States based on Active Store Context */}
       {view === 'bragboard' && <BragBoard storeLocation={getActiveStoreContext()} onBack={() => setView(getActiveStoreContext().toLowerCase())} />}
       {view === 'gallery' && <VoucherDraw storeLocation={getActiveStoreContext()} onBack={() => setView(getActiveStoreContext().toLowerCase())} />}
+        {view === 'blog-article' && <NewsArticle params={{ location: getActiveStoreContext() }} onBack={() => setView(getActiveStoreContext().toLowerCase())} />}
 
       {/* Main Storefront Dashboards */}
       {view === 'canberra' && <CanberraDashboard onBack={() => setView('home')} onNavigate={setView} />}

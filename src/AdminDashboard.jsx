@@ -105,6 +105,14 @@ export default function AdminDashboard({ onBack }) {
     details: ''
   });
 
+  // 📢 Latest News / Feature Story States
+  const [newsHeadline, setNewsHeadline] = useState('');
+  const [newsBlurb, setNewsBlurb] = useState('');
+  const [newsContent, setNewsContent] = useState('');
+  const [newsImageUrl, setNewsImageUrl] = useState('');
+  const [newsBtnText, setNewsBtnText] = useState('');
+  const [newsBtnUrl, setNewsBtnUrl] = useState('');
+  const [loadingNews, setLoadingNews] = useState(false);
   const monthsList = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -122,7 +130,8 @@ export default function AdminDashboard({ onBack }) {
       fetchSubmissions(), 
       fetchStaffPicks(),
       fetchWeeklyProducts(),
-      fetchVideoLinks()
+      fetchVideoLinks(),
+      fetchStoreNews()
     ]);
     setIsLoading(false);
   };
@@ -142,7 +151,65 @@ export default function AdminDashboard({ onBack }) {
       console.error('System error fetching video links:', err);
     }
   };
+useEffect(() => {
+    if (isAuthenticated) {
+      fetchStoreNews();
+    }
+  }, [activeStore, isAuthenticated]);
 
+  const fetchStoreNews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('store_news')
+        .select('*');
+      
+      if (data && !error) {
+        const currentNews = data.find(row => row.store_location.toLowerCase() === activeStore.toLowerCase());
+        if (currentNews) {
+          setNewsHeadline(currentNews.headline || '');
+          setNewsBlurb(currentNews.blurb || '');
+          setNewsContent(currentNews.content || '');
+          setNewsImageUrl(currentNews.image_url || '');
+          setNewsBtnText(currentNews.button_text || '');
+          setNewsBtnUrl(currentNews.button_url || '');
+        } else {
+          setNewsHeadline(''); setNewsBlurb(''); setNewsContent('');
+          setNewsImageUrl(''); setNewsBtnText(''); setNewsBtnUrl('');
+        }
+      }
+    } catch (err) {
+      console.error('System error fetching store news data:', err);
+    }
+  };
+
+  const handlePublishNews = async (e) => {
+    e.preventDefault();
+    setLoadingNews(true);
+
+    try {
+      const { error } = await supabase
+        .from('store_news')
+        .upsert({
+          store_location: activeStore,
+          headline: newsHeadline,
+          blurb: newsBlurb,
+          content: newsContent,
+          image_url: newsImageUrl,
+          button_text: newsBtnText || null,
+          button_url: newsBtnUrl || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'store_location' });
+
+      if (error) {
+        alert('Error publishing news: ' + error.message);
+      } else {
+        alert(`Successfully published live feature story for the ${activeStore} Hub!`);
+      }
+    } catch (err) {
+      console.error('System error publishing news:', err);
+    }
+    setLoadingNews(false);
+  };
   const fetchSubmissions = async () => {
     try {
       const { data, error } = await supabase
@@ -482,6 +549,86 @@ export default function AdminDashboard({ onBack }) {
             >
               {loadingVideo ? 'Saving to Database...' : 'Update Active Videos'}
             </button>
+          </div>
+          {/* ================= SECTION 0.5: LATEST NEWS MANAGER ================= */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="border-b border-zinc-800 pb-3">
+              <h2 className="text-base font-black text-white uppercase tracking-wide flex items-center gap-2">
+                📢 Hub Feature Story & Blog Announcement ({activeStore})
+              </h2>
+              <p className="text-xs text-zinc-400">Publish top-of-feed banners linked to individual blog write-ups</p>
+            </div>
+
+            <form onSubmit={handlePublishNews} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Article Headline Title</label>
+                    <input 
+                      type="text" required value={newsHeadline} onChange={e => setNewsHeadline(e.target.value)}
+                      placeholder="e.g., Rise Fly Fishing Film Tour Tickets On Sale!"
+                      className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Main Feed Preview Blurb (Short Summary)</label>
+                    <input 
+                      type="text" required value={newsBlurb} onChange={e => setNewsBlurb(e.target.value)}
+                      placeholder="A crisp 1-2 sentence teaser context line to pull views from the feed."
+                      className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Feature Cover Image Link URL</label>
+                    <input 
+                      type="url" required value={newsImageUrl} onChange={e => setNewsImageUrl(e.target.value)}
+                      placeholder="Paste link to your hosted header picture layout..."
+                      className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Full Article Page Content (Blog Text Layout)</label>
+                  <textarea 
+                    rows="7" required value={newsContent} onChange={e => setNewsContent(e.target.value)}
+                    placeholder="Write out the comprehensive story message details. Double return spaces will generate clean content paragraph transitions."
+                    className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none resize-none h-[178px]"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-850 pt-3">
+                <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider block mb-2">⚡ Optional Interactive Action Button Link</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Button Text Tag</label>
+                    <input 
+                      type="text" value={newsBtnText} onChange={e => setNewsBtnText(e.target.value)}
+                      placeholder="e.g., Secure Tickets Now"
+                      className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Button Destination Web Link Address</label>
+                    <input 
+                      type="url" value={newsBtnUrl} onChange={e => setNewsBtnUrl(e.target.value)}
+                      placeholder="e.g., https://risefilmtour.com.au/tickets"
+                      className="w-full bg-black border border-zinc-800 rounded p-2 text-white focus:border-[#8cc63f] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  type="submit" disabled={loadingNews}
+                  className="w-full sm:w-auto bg-[#8cc63f] hover:brightness-110 text-black text-[10px] font-black uppercase px-5 py-2.5 rounded-lg tracking-wider transition-all disabled:opacity-50"
+                >
+                  {loadingNews ? 'Publishing Wire Update...' : `Publish Live ${activeStore} Story`}
+                </button>
+              </div>
+            </form>
           </div>
 
           {/* ================= SECTION A: PRODUCT OF THE WEEK WORKBENCH ================= */}

@@ -239,7 +239,7 @@ export default function LocalWaterHydrometrics() {
                         <div className="text-[9px] font-mono text-zinc-400 mb-3 bg-black p-1.5 rounded border border-white/5 w-full text-center tracking-wide">
                           {chartData.map(d => `${d.label}: ${d.level}%`).join(' | ')}
                         </div>
-                        <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                        <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                           <defs>
                             <linearGradient id={uniqueGradientId} x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#8cc63f" stopOpacity={0.35}/>
@@ -248,7 +248,7 @@ export default function LocalWaterHydrometrics() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                           <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={(v) => `${v}%`} />
+                          <YAxis width={40}stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={(v) => `${v}%`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#8cc63f" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
                         </AreaChart>
@@ -307,7 +307,7 @@ export default function LocalWaterHydrometrics() {
                         <div className="text-[9px] font-mono text-zinc-400 mb-3 bg-black p-1.5 rounded border border-white/5 w-full text-center tracking-wide">
                           {chartData.map(d => `${d.label}: ${d.level}m`).join(' | ')}
                         </div>
-                        <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                        <AreaChart width={chartWidth} height={130} data={chartData} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                           <defs>
                             <linearGradient id={uniqueGradientId} x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.35}/>
@@ -316,7 +316,7 @@ export default function LocalWaterHydrometrics() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                           <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} tickFormatter={(v) => `${v}m`} />
+                          <YAxis width={40}stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} tickFormatter={(v) => `${v}m`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#0ea5e9" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
                         </AreaChart>
