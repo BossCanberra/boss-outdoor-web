@@ -59,6 +59,7 @@ export default async function handler(request, response) {
     // Calculate next data coordinates
     const val = (name, fallback) => currentLevels?.find(l => l.location_name === name)?.current_value || fallback;
 
+    const bloweringVal = Math.min(100, Math.max(10, val('BLOWERING DAM', 82.4) + (rainFactor * 1.5)));
     const burrinjuckVal = Math.min(100, Math.max(10, val('BURRINJUCK', 71.3) + (rainFactor * 2)));
     const googongVal = Math.min(100, Math.max(10, val('GOOGONG DAM', 96.3) + (rainFactor * 1)));
     const wyangalaVal = Math.min(100, Math.max(10, val('WYANGALA', 63.8) - 0.02));
@@ -74,6 +75,7 @@ export default async function handler(request, response) {
 
     // 4. Assemble perfectly mapped updates array with dynamic calculations
     const updates = [
+      { location_name: 'BLOWERING DAM', location_type: 'DAM', current_value: bloweringVal, status_indicator: calculateDeltaStatus('BLOWERING DAM', bloweringVal, '%') },
       { location_name: 'BURRINJUCK', location_type: 'DAM', current_value: burrinjuckVal, status_indicator: calculateDeltaStatus('BURRINJUCK', burrinjuckVal, '%') },
       { location_name: 'EUCUMBENE', location_type: 'DAM', current_value: liveEucumbene, status_indicator: calculateDeltaStatus('EUCUMBENE', liveEucumbene, '%') },
       { location_name: 'GOOGONG DAM', location_type: 'DAM', current_value: googongVal, status_indicator: calculateDeltaStatus('GOOGONG DAM', googongVal, '%') },

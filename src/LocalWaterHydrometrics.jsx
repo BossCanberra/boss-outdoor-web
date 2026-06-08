@@ -158,7 +158,7 @@ export default function LocalWaterHydrometrics() {
       } catch (err) {
         console.error("Error running split-resolution metrics parser:", err);
       } finally {
-        setLoading(false);
+        loading(false);
       }
     };
     fetchAllWaterData();
@@ -198,11 +198,15 @@ export default function LocalWaterHydrometrics() {
             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Water Storage Catchments</h3>
             <div className="grid grid-cols-1 gap-3">
               {dams.map(dam => {
-                const variance = dam.variance_value ? parseFloat(dam.variance_value).toFixed(1) : '0.0';
                 const isExpanded = expandedName === dam.location_name.trim();
                 const uniqueGradientId = `embed-dam-grad-${dam.id}`;
                 const lookupKey = dam.location_name.toLowerCase().trim();
                 const chartData = history[lookupKey] || [];
+                
+                // Unified Upper-case inclusion indicators matching delta cron strings
+                const indicator = dam.status_indicator || 'STEADY';
+                const isRising = indicator.toUpperCase().includes('RISEN');
+                const isFalling = indicator.toUpperCase().includes('FALLEN');
 
                 return (
                   <div 
@@ -217,10 +221,10 @@ export default function LocalWaterHydrometrics() {
                         <h4 className="font-black text-white text-sm uppercase tracking-wide">{dam.location_name}</h4>
                         <div className="flex flex-col gap-0.5">
                           <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded w-max ${
-                            dam.status_indicator === 'Rising' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/30' :
-                            dam.status_indicator === 'Falling' ? 'bg-amber-950 text-amber-400 border border-amber-800/30' : 'bg-zinc-800 text-zinc-400'
+                            isRising ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/30' :
+                            isFalling ? 'bg-amber-950 text-amber-400 border border-amber-800/30' : 'bg-zinc-800 text-zinc-400'
                           }`}>
-                            {dam.status_indicator === 'Rising' ? `📈 Risen ${variance}%` : dam.status_indicator === 'Falling' ? `📉 Fallen ${variance}%` : '➡️ Steady'}
+                            {isRising ? `📈 ${indicator}` : isFalling ? `📉 ${indicator}` : '➡️ STEADY'}
                           </span>
                           <span className="text-[8px] font-bold tracking-wider text-zinc-400 uppercase mt-0.5">
                             {isExpanded ? '[-] Hide Trend Timeline' : '[+] Open Multi-Week Trend'}
@@ -248,7 +252,7 @@ export default function LocalWaterHydrometrics() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                           <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                          <YAxis width={40}stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={(v) => `${v}%`} />
+                          <YAxis width={40} stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={(v) => `${v}%`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#8cc63f" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
                         </AreaChart>
@@ -273,6 +277,10 @@ export default function LocalWaterHydrometrics() {
                 const uniqueGradientId = `embed-river-grad-${river.id}`;
                 const lookupKey = river.location_name.toLowerCase().trim();
                 const chartData = history[lookupKey] || [];
+                
+                const indicator = river.status_indicator || 'STEADY';
+                const isRising = indicator.toUpperCase().includes('RISEN');
+                const isFalling = indicator.toUpperCase().includes('FALLEN');
 
                 return (
                   <div 
@@ -294,10 +302,9 @@ export default function LocalWaterHydrometrics() {
                       <div className="text-right">
                         <div className="text-base font-black text-white">{Number(river.current_value).toFixed(2)}m</div>
                         <div className={`text-[9px] font-bold text-right uppercase ${
-                          river.status_indicator === 'Rising' ? 'text-emerald-400' :
-                          river.status_indicator === 'Falling' ? 'text-amber-400' : 'text-zinc-500'
+                          isRising ? 'text-emerald-400' : isFalling ? 'text-amber-400' : 'text-zinc-500'
                         }`}>
-                          {river.status_indicator === 'Rising' ? '▲ Rising' : river.status_indicator === 'Falling' ? '▼ Falling' : '■ Steady'}
+                          {isRising ? '▲ RISING' : isFalling ? '▼ FALLING' : '■ STEADY'}
                         </div>
                       </div>
                     </div>
@@ -316,7 +323,7 @@ export default function LocalWaterHydrometrics() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                           <XAxis dataKey="label" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                          <YAxis width={40}stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} tickFormatter={(v) => `${v}m`} />
+                          <YAxis width={40} stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} tickFormatter={(v) => `${v}m`} />
                           <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', fontSize: '11px' }} />
                           <Area type="monotone" dataKey="level" stroke="#0ea5e9" strokeWidth={2.5} fillOpacity={1} fill={`url(#${uniqueGradientId})`} isAnimationActive={false} />
                         </AreaChart>
