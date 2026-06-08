@@ -64,6 +64,7 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
           setStaffPicks(picksRes.data || []);
           setWeeklyProduct(weeklyRes.data || null);
           if (videoRes.data?.youtube_url) setVideoReportId(videoRes.data.youtube_url);
+          setLatestNews(newsRes.data || null);
         } catch (dataErr) {
           console.error("Error retrieving store selections stream:", dataErr);
         } finally {
