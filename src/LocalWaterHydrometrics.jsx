@@ -118,14 +118,13 @@ export default function LocalWaterHydrometrics() {
           d.setDate(now.getDate() - i);
           rolling7Days.push(d.toLocaleDateString('en-AU', { weekday: 'short' }));
         }
-
-        cleanDbData.forEach(item => {
+cleanDbData.forEach(item => {
           const nameKey = item.location_name.toLowerCase().trim();
           const baseVal = parseFloat(item.current_value) || 0.0;
 
           if (item.location_type === 'DAM') {
             const damPoints = rawGroupedDams[nameKey] || {};
-            const fallbackBaseline = Object.values(damPoints).length > 0 ? Object.values(damPoints)[0].level : baseVal;
+            const fallbackBaseline = Object.values(damPoints).length > 0 ? Object.values(damPoints)[0]?.level : baseVal;
 
             compiledHistory[nameKey] = expectedWeeks.map(w => {
               if (damPoints[w.label]) return damPoints[w.label];
@@ -139,7 +138,7 @@ export default function LocalWaterHydrometrics() {
           
           else if (item.location_type === 'RIVER') {
             const riverPoints = rawGroupedRivers[nameKey] || {};
-            const fallbackBaseline = Object.values(riverPoints).length > 0 ? Object.values(riverPoints)[0].level : baseVal;
+            const fallbackBaseline = Object.values(riverPoints).length > 0 ? Object.values(riverPoints)[0]?.level : baseVal;
 
             compiledHistory[nameKey] = rolling7Days.map((dayLabel, index) => {
               if (riverPoints[dayLabel]) {
@@ -158,7 +157,7 @@ export default function LocalWaterHydrometrics() {
       } catch (err) {
         console.error("Error running split-resolution metrics parser:", err);
       } finally {
-        loading(false);
+        setLoading(false);
       }
     };
     fetchAllWaterData();
