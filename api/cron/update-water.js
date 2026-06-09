@@ -13,8 +13,8 @@ export default async function handler(request, response) {
 
   // 1. Establish live scrape baseline fallbacks
   let liveEucumbene = 37.8;
-  let liveJindabyne = 65.3;
-  let liveTantangara = 7.1;
+  let liveJindabyne = 66.2;
+  let liveTantangara = 9.7;
 
   try {
     const snowyPortalUrl = 'https://raw.githubusercontent.com/jasonwilliams/snowy-hydro-scraper/main/data/latest.json';
@@ -59,10 +59,10 @@ export default async function handler(request, response) {
     // Calculate next data coordinates
     const val = (name, fallback) => currentLevels?.find(l => l.location_name === name)?.current_value || fallback;
 
-    const bloweringVal = Math.min(100, Math.max(10, val('BLOWERING DAM', 82.4) + (rainFactor * 1.5)));
-    const burrinjuckVal = Math.min(100, Math.max(10, val('BURRINJUCK', 71.3) + (rainFactor * 2)));
-    const googongVal = Math.min(100, Math.max(10, val('GOOGONG DAM', 96.3) + (rainFactor * 1)));
-    const wyangalaVal = Math.min(100, Math.max(10, val('WYANGALA', 63.8) - 0.02));
+    const bloweringVal = Math.min(100, Math.max(10, val('BLOWERING DAM', 32.0) + (rainFactor * 0.5)));
+const burrinjuckVal = Math.min(100, Math.max(10, val('BURRINJUCK', 39.0) + (rainFactor * 0.5)));
+const googongVal = Math.min(100, Math.max(10, val('GOOGONG DAM', 81.5) + (rainFactor * 0.2)));
+const wyangalaVal = Math.min(100, Math.max(10, val('WYANGALA', 62.0) + (rainFactor * 0.2)));
     
     const lobsVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: LOBS HOLE GAUGE', 1.12) + rainFactor);
     const tharwaVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: THARWA BRIDGE BEAT', 1.12) + rainFactor);
