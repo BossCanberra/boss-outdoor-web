@@ -70,7 +70,7 @@ const ptHutVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: POINT HUT CROSSING', 0.3
 const kambahVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: KAMBAH POOL GORGE', 0.51) + (rainFactor * 1.2));
 const uriarraVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: URIARRA CROSSING BEAT', 0.29) + rainFactor);
 const hallVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: HALL CROSSING (ACT/NSW)', 1.32) + rainFactor);
-const tumutVal = Math.max(0.05, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 0.13) + (rainFactor * 0.1));
+const tumutVal = Math.max(0.05, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 0.162) + (rainFactor * 0.1));
 const cotterVal = Math.max(0.05, val('COTTER RIVER: BELOW BENDORA DAM POOL', 0.11) + (rainFactor * 0.5));
 
     // 4. Assemble perfectly mapped updates array with dynamic calculations
