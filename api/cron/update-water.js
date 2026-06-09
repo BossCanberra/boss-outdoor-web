@@ -64,14 +64,14 @@ const burrinjuckVal = Math.min(100, Math.max(10, val('BURRINJUCK', 39.0) + (rain
 const googongVal = Math.min(100, Math.max(10, val('GOOGONG DAM', 81.5) + (rainFactor * 0.2)));
 const wyangalaVal = Math.min(100, Math.max(10, val('WYANGALA', 62.0) + (rainFactor * 0.2)));
     
-    const lobsVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: LOBS HOLE GAUGE', 1.12) + rainFactor);
-    const tharwaVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: THARWA BRIDGE BEAT', 1.12) + rainFactor);
-    const ptHutVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: POINT HUT CROSSING', 1.04) + rainFactor);
-    const kambahVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: KAMBAH POOL GORGE', 1.22) + (rainFactor * 1.2));
-    const uriarraVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: URIARRA CROSSING BEAT', 0.98) + rainFactor);
-    const hallVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: HALL CROSSING (ACT/NSW)', 0.88) + rainFactor);
-    const tumutVal = Math.max(0.05, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 0.16) + (rainFactor * 0.1));
-    const cotterVal = Math.max(0.05, val('COTTER RIVER: BELOW BENDORA DAM POOL', 0.54) + (rainFactor * 0.5));
+    const lobsVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: LOBS HOLE GAUGE', 1.85) + rainFactor);
+const tharwaVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: THARWA BRIDGE BEAT', 0.38) + rainFactor);
+const ptHutVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: POINT HUT CROSSING', 0.35) + rainFactor);
+const kambahVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: KAMBAH POOL GORGE', 0.51) + (rainFactor * 1.2));
+const uriarraVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: URIARRA CROSSING BEAT', 0.29) + rainFactor);
+const hallVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: HALL CROSSING (ACT/NSW)', 1.32) + rainFactor);
+const tumutVal = Math.max(0.05, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 0.13) + (rainFactor * 0.1));
+const cotterVal = Math.max(0.05, val('COTTER RIVER: BELOW BENDORA DAM POOL', 0.11) + (rainFactor * 0.5));
 
     // 4. Assemble perfectly mapped updates array with dynamic calculations
     const updates = [
