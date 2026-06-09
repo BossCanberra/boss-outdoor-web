@@ -263,22 +263,15 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
                     {latestNews.blurb}
                   </p>
                 </div>
-                {latestNews.button_text && latestNews.button_url && (
-                  <div className="pt-1 border-t border-white/5">
-                    <a 
-                      href={latestNews.button_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-full bg-[#8cc63f] hover:bg-[#9bd44e] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-all block text-center shadow-md"
-                    >
-                      {latestNews.button_text} &rarr;
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
+                <div className="pt-1 border-t border-white/5">
+  <button
+    onClick={() => onNavigate('blog-article', { location: 'Canberra' })}
+    className="w-full flex justify-center items-center bg-[#8cc63f] hover:bg-[#9bd44e] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-colors duration-150"
+  >
+    READ MORE
+  </button>
+</div>
+
           {/* BAROMETRIC PRESSURE STATION CARD */}
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-2">
             <div className="flex justify-between items-center">
@@ -465,6 +458,6 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
 
         </div>
       </div>
-    </div>
+</div>
   );
 }
