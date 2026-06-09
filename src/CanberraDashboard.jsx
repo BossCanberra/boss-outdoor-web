@@ -38,11 +38,11 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
   const [isLoading, setIsLoading] = useState(true);
   const [baroTrend, setBaroTrend] = useState({ arrow: '→', status: 'Steady', color: 'text-zinc-400', advice: 'Steady glass. Focus on standard native structures.' });
   
-// 🎣 Live Datastream States
+  // 🎣 Live Datastream States
   const [staffPicks, setStaffPicks] = useState([]);
   const [weeklyProduct, setWeeklyProduct] = useState(null);
   const [picksLoading, setPicksLoading] = useState(true);
-  const [videoReportId, setVideoReportId] = useState(null); // <-- NEW STATE
+  const [videoReportId, setVideoReportId] = useState(null);
   const [latestNews, setLatestNews] = useState(null);
 
   const canberraBgUrl = "https://images.unsplash.com/photo-1444090542259-0af8fa96557e?auto=format&fit=crop&w=1200&q=80";
@@ -53,7 +53,7 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
         const { data: config } = await supabase.from('store_configs').select('*').eq('store_location', 'Canberra').single();
         setVideoConfig(config);
 
-      // 🏪 Fetch dynamic inventory selections from Supabase streams
+        // 🏪 Fetch dynamic inventory selections from Supabase streams
         try {
           const [picksRes, weeklyRes, videoRes, newsRes] = await Promise.all([
             supabase.from('staff_picks').select('*').eq('store_location', 'Canberra'),
@@ -94,7 +94,7 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
           setLiveWeather(weatherObj);
           setForecastData(parsing.forecast || []);
         } else {
- const weatherResponse = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-35.2835&longitude=149.1281&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_sum&timezone=Australia%2FSydney');
+          const weatherResponse = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-35.2835&longitude=149.1281&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_sum&timezone=Australia%2FSydney');
           const weatherData = await weatherResponse.json(); 
           
           const currentBaro = Math.round(weatherData.current.pressure_msl);
@@ -195,41 +195,6 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
     }
   });
 
-  const riverBeats = [
-    { label: 'Murrumbidgee River: Lobs Hole Gauge', match: 'Lobs Hole', defaultVal: 0.82 },
-    { label: 'Murrumbidgee River: Tharwa Bridge Beat', match: 'Tharwa', defaultVal: 1.12 },
-    { label: 'Murrumbidgee River: Point Hut Crossing', match: 'Point Hut', defaultVal: 1.04 },
-    { label: 'Murrumbidgee River: Kambah Pool Gorge', match: 'Kambah', defaultVal: 1.22 },
-    { label: 'Murrumbidgee River: Uriarra Crossing Beat', match: 'Uriarra', defaultVal: 0.98 },
-    { label: 'Murrumbidgee River: Hall Crossing (ACT/NSW)', match: 'Hall', defaultVal: 1.15 },
-    { label: 'Tumut River: Tumut Town Gauge Hub', match: 'Tumut', defaultVal: 1.34 },
-    { label: 'Cotter River: Below Bendora Dam Pool', match: 'Bendora', defaultVal: 0.58 }
-  ];
-
-  const processedRivers = riverBeats.map(beat => {
-    const dbMatch = waterData.find(item => 
-      item.location_type === 'RIVER' && 
-      item.location_name.toUpperCase().includes(beat.match.toUpperCase())
-    );
-    return {
-      id: dbMatch?.id || beat.match,
-      location_name: beat.label,
-      current_value: dbMatch ? parseFloat(dbMatch.current_value) : beat.defaultVal
-    };
-  });
-
-  const calculateFlowRate = (name, height) => {
-    const h = parseFloat(height);
-    if (name.includes('Tumut')) return Math.round(h * 1100 + 400);
-    if (name.includes('Bendora') || name.includes('Cotter')) return Math.round(h * 340 + 20);
-    if (name.includes('Hall')) return Math.round(h * 920 + 140);
-    if (name.includes('Uriarra')) return Math.round(h * 880 + 110);
-    if (name.includes('Kambah')) return Math.round(h * 820 + 95);
-    if (name.includes('Point Hut')) return Math.round(h * 760 + 85);
-    if (name.includes('Tharwa')) return Math.round(h * 710 + 75);
-    return Math.round(h * 620 + 60);
-  };
-
   return (
     <div className="min-h-screen bg-black text-white pb-10 relative overflow-hidden">
       <div className="fixed inset-0 bg-cover bg-center opacity-25 scale-105" style={{ backgroundImage: `url(${canberraBgUrl})` }}></div>
@@ -250,7 +215,7 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
                   className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 ease-out cursor-pointer"
                   onClick={() => onNavigate('blog-article', { location: 'Canberra' })}
                 />
-              <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-[8px] px-2 py-0.5 rounded-full text-[#8cc63f] font-black uppercase tracking-wider border border-white/5">
+                <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-[8px] px-2 py-0.5 rounded-full text-[#8cc63f] font-black uppercase tracking-wider border border-white/5">
                   Latest News
                 </span>
               </div>
@@ -264,13 +229,16 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
                   </p>
                 </div>
                 <div className="pt-1 border-t border-white/5">
-  <button
-    onClick={() => onNavigate('blog-article', { location: 'Canberra' })}
-    className="w-full flex justify-center items-center bg-[#8cc63f] hover:bg-[#9bd44e] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-colors duration-150"
-  >
-    READ MORE
-  </button>
-</div>
+                  <button
+                    onClick={() => onNavigate('blog-article', { location: 'Canberra' })}
+                    className="w-full flex justify-center items-center bg-[#8cc63f] hover:bg-[#9bd44e] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-colors duration-150"
+                  >
+                    {latestNews.button_text || 'READ MORE'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* BAROMETRIC PRESSURE STATION CARD */}
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-2">
@@ -297,14 +265,14 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
             </button>
           </div>
 
-{/* 📺 WEEKLY FISHING REPORT VIDEO */}
+          {/* 📺 WEEKLY FISHING REPORT VIDEO */}
           {videoReportId && (
             <div className="bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/10 space-y-4">
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <h2 className="font-black text-sm text-white flex items-center gap-2">
                   <span className="text-[#8cc63f]">📺</span> WEEKLY FISHING REPORT
                 </h2>
-               <span className="text-[8px] bg-red-950/60 text-red-400 px-2 py-0.5 rounded-full font-black uppercase tracking-wider border border-red-900/30 animate-pulse">
+                <span className="text-[8px] bg-red-950/60 text-red-400 px-2 py-0.5 rounded-full font-black uppercase tracking-wider border border-red-900/30 animate-pulse">
                   Latest Briefing
                 </span>                
               </div>
@@ -319,6 +287,7 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
               </div>
             </div>
           )}
+
           {/* LIVE WEATHER CONDITIONS CARD */}
           <div className="bg-black/40 backdrop-blur-md rounded-xl p-5 shadow-lg border border-white/10">
             <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
@@ -356,9 +325,9 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
                           <span className="text-[10px] text-zinc-500 ml-1">{day.minTemp}°</span>
                         </div>
                         <div className="text-[9px] font-bold text-zinc-400 border-t border-white/5 pt-1 mt-1 leading-tight">
-  <div>💨 {day.maxWind}k <span className="text-[#8cc63f]">{day.windDir}</span></div>
-  <div className="text-blue-400 mt-0.5">💧 {day.rain}mm</div>
-</div>
+                          <div>💨 {day.maxWind}k <span className="text-[#8cc63f]">{day.windDir}</span></div>
+                          <div className="text-blue-400 mt-0.5">💧 {day.rain}mm</div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -454,10 +423,8 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
           {/* EMBEDDED WATER TELEMETRY CONTAINER */}
           <LocalWaterHydrometrics />
 
- 
-
         </div>
       </div>
-</div>
+    </div>
   );
 }
