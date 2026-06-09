@@ -173,9 +173,11 @@ cleanDbData.forEach(item => {
 
   const calculateFlowRate = (name, height) => {
     const h = parseFloat(height);
-    if (name.includes('Tumut')) return Math.round(h * 1100 + 400);
-    if (name.includes('Hall')) return Math.round(h * 850 + 120);
-    if (name.includes('Lobs Hole')) return Math.round(h * 600 + 80);
+    const upperName = name.toUpperCase();
+
+    if (upperName.includes('TUMUT')) return Math.round(h * 3600 + 420);
+    if (upperName.includes('HALL')) return Math.round(h * 850 + 120);
+    if (upperName.includes('LOBS HOLE')) return Math.round(h * 600 + 80);
     return Math.round(h * 450 + 30);
   };
 

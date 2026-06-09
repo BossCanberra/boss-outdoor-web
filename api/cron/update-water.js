@@ -70,7 +70,7 @@ export default async function handler(request, response) {
     const kambahVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: KAMBAH POOL GORGE', 1.22) + (rainFactor * 1.2));
     const uriarraVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: URIARRA CROSSING BEAT', 0.98) + rainFactor);
     const hallVal = Math.max(0.1, val('MURRUMBIDGEE RIVER: HALL CROSSING (ACT/NSW)', 0.88) + rainFactor);
-    const tumutVal = Math.max(0.1, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 1.45) + (rainFactor * 0.8));
+    const tumutVal = Math.max(0.05, val('TUMUT RIVER: TUMUT TOWN GAUGE HUB', 0.16) + (rainFactor * 0.1));
     const cotterVal = Math.max(0.05, val('COTTER RIVER: BELOW BENDORA DAM POOL', 0.54) + (rainFactor * 0.5));
 
     // 4. Assemble perfectly mapped updates array with dynamic calculations
