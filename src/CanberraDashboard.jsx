@@ -233,12 +233,12 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
                     onClick={() => onNavigate('blog-article', { location: 'Canberra' })}
                     className="w-full flex justify-center items-center bg-[#8cc63f] hover:bg-[#9bd44e] text-black font-black text-[10px] uppercase py-2 rounded-xl tracking-wider transition-colors duration-150"
                   >
-                    {latestNews.button_text || 'READ MORE'}
-                  </button>
+                  READ MORE
+</button>
                 </div>
               </div>
             </div>
-          )}
+
 
           {/* BAROMETRIC PRESSURE STATION CARD */}
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-2">
