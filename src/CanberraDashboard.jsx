@@ -237,10 +237,10 @@ export default function CanberraDashboard({ onBack, onNavigate }) {
 </button>
                 </div>
               </div>
-            </div>
+</div>
+  )}
 
-
-          {/* BAROMETRIC PRESSURE STATION CARD */}
+  {/* BAROMETRIC PRESSURE STATION CARD */}
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-[10px] uppercase font-black tracking-widest text-zinc-500">Barometric Pressure Station</span>
